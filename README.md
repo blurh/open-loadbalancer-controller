@@ -89,31 +89,6 @@ spec:
 
 详细说明见 [docs/LEADER_ELECTION.md](docs/LEADER_ELECTION.md)
 
-### Metrics 监控
-
-controller 默认在 `:8081/metrics` 暴露 **Prometheus metrics**，包括：
-
-- Reconcile 性能指标（成功率、延迟、错误率）
-- 工作队列指标（队列深度、重试次数）
-- Kubernetes API 调用指标
-- Leader election 状态
-- Go runtime 指标
-
-**部署 metrics Service：**
-
-```bash
-kubectl apply -f deploy/metrics-service.yaml
-```
-
-**访问 metrics：**
-
-```bash
-kubectl port-forward -n openlb-system svc/openlb-controller-metrics 8081:8081
-curl http://localhost:8081/metrics
-```
-
-详细说明见 [docs/METRICS.md](docs/METRICS.md)
-
 ## 文档
 
 - [docs/RESOURCES.md](docs/RESOURCES.md) — 监听的资源（Service 注解、Node、EndpointSlice、Secret 格式参考）
