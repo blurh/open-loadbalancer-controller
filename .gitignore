@@ -1,0 +1,33 @@
+# AI assistant instruction files
+CLAUDE.md
+AGENTS.md
+
+# Compiled binaries / build output
+/openlb-controller
+/openlb-agent
+/bin/
+/dist/
+*.exe
+
+# Go test & profiling artifacts
+*.test
+*.out
+coverage.*
+
+# Agent runtime state (OPENLB_AGENT_STATE_DIR, nginx transaction journal)
+.openlb-transaction.json
+service-locks.json
+/var/lib/openlb-agent/
+
+# Editor / OS noise
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Logs & local env
+*.log
+.env
+.env.local
