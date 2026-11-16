@@ -1,0 +1,80 @@
+# controller 的 RBAC。
+# controller watch 全集群的 Service/Secret/Node/EndpointSlice，故用 ClusterRole；
+# CR 与 Service 同 namespace；controller 管理所有 namespace 的 CR，使用独立资源权限。
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openlb-controller
+  namespace: openlb-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: openlb-controller
+rules:
+  - apiGroups: ["openlb.io"]
+    resources: ["openlbservicestates"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["openlb.io"]
+    resources: ["openlbservicestates/status", "openlbservicestates/finalizers"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["services/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: openlb-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: openlb-controller
+subjects:
+  - kind: ServiceAccount
+    name: openlb-controller
+    namespace: openlb-system
+---
+# 可选 ConfigMap 后端及 leader election，限定在 openlb-system 命名空间
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openlb-controller-store
+  namespace: openlb-system
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Leader Election 需要操作 Lease 资源
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openlb-controller-store
+  namespace: openlb-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openlb-controller-store
+subjects:
+  - kind: ServiceAccount
+    name: openlb-controller
+    namespace: openlb-system

@@ -1,0 +1,137 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: openlbservicestates.openlb.io
+spec:
+  group: openlb.io
+  scope: Namespaced
+  names:
+    plural: openlbservicestates
+    singular: openlbservicestate
+    kind: OpenLBServiceState
+    listKind: OpenLBServiceStateList
+    shortNames: [olbstate]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Service
+          type: string
+          jsonPath: .spec.serviceRef.name
+        - name: Ready
+          type: string
+          jsonPath: '.status.conditions[?(@.type=="Ready")].status'
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          x-kubernetes-validations:
+            - rule: self.metadata.name == self.spec.serviceRef.name
+              message: serviceRef.name must match metadata.name
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: [serviceRef]
+              properties:
+                serviceRef:
+                  type: object
+                  required: [name, uid]
+                  x-kubernetes-validations:
+                    - rule: self == oldSelf
+                      message: serviceRef is immutable; clean up the old state before replacing it
+                  properties:
+                    name:
+                      type: string
+                      minLength: 1
+                      maxLength: 63
+                      pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+                    uid:
+                      type: string
+                      minLength: 1
+                      maxLength: 128
+            status:
+              type: object
+              properties:
+                certificateRefs:
+                  description: Current and possibly applied TLS Secret identities in this namespace; no certificate data.
+                  type: array
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys: [name, uid]
+                  items:
+                    type: object
+                    required: [name, uid]
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                        maxLength: 253
+                      uid:
+                        type: string
+                        minLength: 1
+                        maxLength: 128
+                instances:
+                  type: array
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys: [address]
+                  items:
+                    type: object
+                    required: [address, phase]
+                    properties:
+                      address:
+                        type: string
+                        minLength: 1
+                        maxLength: 1024
+                      phase:
+                        type: string
+                        enum: [PendingApply, Applied, PendingDelete, Cleaned]
+                      configHash:
+                        type: string
+                        maxLength: 64
+                      lastError:
+                        type: string
+                        maxLength: 2048
+                      ingress:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            ip:
+                              type: string
+                            hostname:
+                              type: string
+                conditions:
+                  type: array
+                  x-kubernetes-list-type: map
+                  x-kubernetes-list-map-keys: [type]
+                  items:
+                    type: object
+                    required: [type, status, reason, message, lastTransitionTime]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum: ['True', 'False', Unknown]
+                      observedGeneration:
+                        type: integer
+                        format: int64
+                        minimum: 0
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openlb-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openlb-controller
+  namespace: openlb-system
+  labels:
+    app: openlb-controller
+spec:
+  # 启用 leader election 后支持多副本，确保高可用
+  # 同一时刻只有 leader 执行 reconcile，其他副本待命
+  replicas: 2
+  selector:
+    matchLabels:
+      app: openlb-controller
+  template:
+    metadata:
+      labels:
+        app: openlb-controller
+    spec:
+      serviceAccountName: openlb-controller
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: controller
+          # TODO: 替换为你自己的镜像仓库
+          image: ghcr.io/blurh/openlb-controller:latest
+          ports:
+            - name: metrics
+              containerPort: 8081
+              protocol: TCP
+          env:
+            # Leader Election 使用 controller 所在命名空间
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPENLB_STORE_TYPE
+              value: "crd"
+            - name: OPENLB_SYNC_TYPE
+              value: "http"
+            # Leader election 配置（默认启用）
+            # - name: OPENLB_LEADER_ELECTION
+            #   value: "true"
+            # Metrics 配置（默认 :8081，设置为 "0" 可禁用）
+            # - name: OPENLB_METRICS_BIND_ADDRESS
+            #   value: ":8081"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
