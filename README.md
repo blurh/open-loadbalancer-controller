@@ -24,7 +24,7 @@ kubectl get lease -n openlb-system openlb-controller-leader
 kubectl get olbstate -A
 ```
 
-## Service 示例
+### Service 示例
 
 HTTPS 配置（需要 TLS Secret）
 
