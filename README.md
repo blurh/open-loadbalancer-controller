@@ -23,26 +23,6 @@ metadata:
 - `/cleanup` 仍只需要 namespace/name；agent 启动时从持久化锁和各转发器配置恢复归属。无法定位归属时对所有可用实现执行幂等清理，以重试文件已删除但尚未 reload 的情况。
 - Nginx 与 LVS 均已实现。LVS 使用 IPVS 转发 TCP/UDP，忽略七层配置并在 Service 上记录 `L7ConfigurationIgnored` 事件；默认自动使用本机内网 IPv4，`OPENLB_LVS_VIPS` 可选覆盖。详见 [LVS 部署与行为](docs/LVS.md)。
 
-### Agent Service 端口锁
-
-每个 agent 按「传输协议 + 监听端口」记录持有的 `namespace/name`，所有 class 共用锁。
-HTTP、HTTPS、TCP 共用 TCP 端口空间，UDP 独立；例如两个 Service 不能同时占用 TCP/80，
-但 TCP/53 和 UDP/53 可以分别由不同 Service 持有。没有后端时也保留请求中声明的端口。
-
-冲突请求在修改配置、清理旧 class 之前返回 HTTP 409，响应包含端口、持有者和 class。
-同一 Service 可幂等更新；更新成功后释放已移除的端口，cleanup/reload 成功后释放全部端口。
-Apply 或 Delete 失败时保留旧、新端口预留；未完成操作会持久化，重试时强制 reload，避免
-磁盘文件已变化但运行中的转发器仍使用旧配置时提前释放端口。
-
-| 环境变量 | 默认值 | 用途 |
-|----------|--------|------|
-| `OPENLB_AGENT_STATE_DIR` | `/var/lib/openlb-agent` | 保存 `service-locks.json`，目录需可写 |
-
-容器部署时，将此目录和 Nginx 生成配置目录一起持久化，例如为状态目录添加
-`-v /srv/openlb/state:/var/lib/openlb-agent`。每个 agent 使用独立目录，单个目录只由一个进程写入。
-首次升级会从已有 Nginx 配置文件恢复端口归属；锁文件损坏或已有归属冲突时拒绝启动。
-锁只管理本 agent 的 Service，不检测宿主机上其他进程的监听端口。
-
 ## 部署
 
 ### Controller 状态存储
