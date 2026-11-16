@@ -8,17 +8,6 @@ agent 仅做配置解析, 将配置渲染为 class 的 nginx 或者 lvs 的配�
 
 ## 部署
 
-### Controller 状态存储
-
-默认使用 `OPENLB_STORE_TYPE=crd`，每个 Service 对应一个同 namespace、同名的
-`OpenLBServiceState`，由 `pkg/store/CRDStore` 保存实例同步和清理进度。
-先持久化目标实例再调用 agent；失败后可从 CR 恢复，清理成功后才释放 finalizer。
-无变化不写 CR，多个 Service 不再争用一个仓库对象。详见 [状态存储](docs/STORAGE.md)。
-
-使用中的 TLS Secret 通过 finalizer 和 CR 中的名称/UID 引用保护；切换或清理全部成功后
-才释放。缺失/无效证书拒绝同步，nginx 配置与证书在失败时一起回滚，支持中断后的恢复。
-部署前需更新 CRD/RBAC，并持久化整个 nginx 配置目录。详见 [证书保护](docs/CERTIFICATES.md)。
-
 ### 快速开始
 
 ```bash
