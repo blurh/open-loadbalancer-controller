@@ -37,13 +37,30 @@ metadata:
   annotations:
     kubernetes.io/openlb.instances: "192.168.1.10"
     kubernetes.io/openlb.protocol-port: "https:443"     # 必需：明确协议
-    kubernetes.io/openlb.cert-secrets: "my-tls-secret"  # 必需：TLS 证书                                                                                               spec:
-  type: LoadBalancer                                                                                                                                                     selector:
+    kubernetes.io/openlb.cert-secrets: "my-tls-secret"  # 必需：TLS 证书
+spec:
+  type: LoadBalancer
+  selector:
     app: my-app
   ports:
     - port: 443
       targetPort: 8080
 ```
+
+更多注解见下一节。
+
+## Service 注解
+
+| 注解 | 必填 | 默认 | 说明 |
+|---|---|---|---|
+| `kubernetes.io/openlb.instances` | 是 | — | 逗号分隔的 LB 实例地址（要同步到的 agent）。地址可带端口，不带端口时用 `OPENLB_AGENT_PORT`（默认 `8080`） |
+| `kubernetes.io/openlb.class` | 否 | `nginx` | 转发器类型：`nginx`（七层）或 `lvs`（四层）。**不填该注解**时默认 `nginx`；**填写了空字符串或未知值**会被 agent 拒绝（HTTP 400） |
+| `kubernetes.io/openlb.protocol-port` | 否 | 由端口推断 | 显式指定每个端口的协议，格式 `协议:端口`，逗号分隔，如 `http:80, https:443`。支持 `http`/`https`/`tcp`/`udp`，覆盖 `Spec.Ports[].AppProtocol` |
+| `kubernetes.io/openlb.cert-secrets` | 否（https 必填） | — | TLS Secret 名称，逗号分隔。必须与 Service 同命名空间；使用 `https` 时必填 |
+| `kubernetes.io/openlb.network-type` | 否 | `nodeport` | 后端取址方式：`nodeport` → `nodeIP:nodePort`；`pod` → `podIP:targetPort`，并自动将 `AllocateLoadBalancerNodePorts` 置为 `false` |
+| `kubernetes.io/openlb.node-network-type` | 否 | `internal` | `nodeport` 模式下使用哪个 Node 地址：`internal`（内网）或 `external`（外网） |
+
+完整示例见 [deploy/example-service.yaml](deploy/example-service.yaml)（nginx 七层）和 [deploy/example-lvs-service.yaml](deploy/example-lvs-service.yaml)（lvs 四层）。
 
 ## 文档
 
