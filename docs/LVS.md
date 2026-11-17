@@ -41,7 +41,7 @@ IPv4，不需要公网连接或 DNS。自动发现仅选择 RFC1918 地址，排
 每个 Service 的端口会配置到所选地址，并将实际监听地址返回 controller，写入
 `status.loadBalancer.ingress`。内网地址使用响应的 InternalIPs；不再额外追加未监听的
 管理地址。地址在启动时确定，本机地址变化后需重启 agent，并由后续同步更新规则。
-容器自动发现的是其所在网络 namespace 的地址；使用宿主机内网 IP 时需使用宿主网络。
+主机 systemd 部署直接使用宿主网络，自动发现的是 LB 主机的内网地址。
 
 需要独立 VIP 时，仍可显式配置一个或多个地址；额外 VIP 的绑定、路由、ARP 和主备漂移
 由部署环境管理。agent 不修改系统地址、路由或全局 IPVS 参数。
@@ -51,23 +51,20 @@ NAT 支持监听端口到后端端口的转换，适用于常见 NodePort 和不
 配置 real server 的 VIP、ARP 或隧道；不符合端口要求时在修改内核前拒绝请求。
 IPVS 命令和模式依据 [ipvsadm 官方手册](https://github.com/horms/ipvsadm/blob/master/ipvsadm.8)。
 
-运行环境需要 Linux IPVS、相应协议/调度模块和 `CAP_NET_ADMIN`。容器镜像已安装
-ipvsadm；容器需使用承载 VIP 的网络 namespace，例如宿主网络。内核模块应由宿主机
-预先加载，不能仅靠容器里安装 ipvsadm 获得内核支持。
+运行环境需要 Linux IPVS、相应协议/调度模块和管理 IPVS 的权限。主机需安装 ipvsadm，
+内核模块应预先加载；不能仅靠安装 ipvsadm 获得内核支持。默认 systemd unit 使用 root。
 
 ```bash
-# 在已配置路由和 IPVS 模块的 LB 上运行，自动使用本机内网 IPv4
-export OPENLB_LVS_FORWARDING=nat
-export OPENLB_AGENT_STATE_DIR=/var/lib/openlb-agent
-openlb-agent
-
-# 或使用项目镜像，共享宿主网络并持久化归属
-docker run --network host --cap-add NET_ADMIN \
-  -v /srv/openlb/state:/var/lib/openlb-agent \
-  openlb-agent
+# 在已配置路由和 IPVS 模块的 LB 上，解压 agent 安装包后执行
+sudo sh ./install.sh
+sudoedit /etc/openlb/agent.env
+sudo systemctl enable --now openlb-agent.service
 ```
 
-示例 Service 见 `deploy/example-lvs-service.yaml`。`openlb.instances` 填写 agent 的管理
+nginx/LVS 主机使用同一个安装入口；LVS 按需安装 ipvsadm，nginx 缺失提示不阻止安装。构建、依赖、配置目录和
+升级步骤见 [Agent 主机部署](AGENT_DEPLOYMENT.md)。
+
+示例 Service 见 `deploy/examples/example-lvs-service.yaml`。`openlb.instances` 填写 agent 的管理
 地址；示例包含 HTTPS 和不存在的 Secret，以演示忽略事件及 TLS 透传。
 
 ```bash

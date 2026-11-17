@@ -231,8 +231,8 @@ openlb_agent_connections{layer="l4", state="active"} + openlb_agent_connections{
 - **采集间隔**：默认 15 秒，通过 `OPENLB_CONNECTION_STATS_INTERVAL` 统一配置。
 
 **权限要求**：
-- 七层：需访问 nginx stub_status 端点（容器内默认可达）
-- 四层：需读取 `/proc/net/tcp*` 的权限（容器内默认可读）
+- 七层：需访问 nginx stub_status 端点（LB 主机本地默认可达）
+- 四层：需读取 `/proc/net/tcp*` 的权限（默认主机 systemd 服务可读）
 
 #### 6. UDP 套接字数指标
 
@@ -265,7 +265,7 @@ openlb_agent_udp_sockets > 100
 - 采集间隔：默认 15 秒，通过 `OPENLB_CONNECTION_STATS_INTERVAL` 统一配置
 
 **权限要求**：
-- 需读取 `/proc/net/udp*` 的权限（容器内默认可读）
+- 需读取 `/proc/net/udp*` 的权限（默认主机 systemd 服务可读）
 
 ---
 

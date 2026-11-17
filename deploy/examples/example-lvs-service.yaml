@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tls-passthrough
+  annotations:
+    kubernetes.io/openlb.class: lvs
+    # 替换为 LB agent 的管理地址；LVS 默认使用本机内网 IPv4，可用 OPENLB_LVS_VIPS 覆盖。
+    kubernetes.io/openlb.instances: "192.0.2.10:8080"
+    kubernetes.io/openlb.network-type: pod
+    # 这两个七层注解会产生 L7ConfigurationIgnored 事件，不影响 TCP 转发。
+    kubernetes.io/openlb.protocol-port: "https:443"
+    kubernetes.io/openlb.cert-secrets: ignored-tls-secret
+spec:
+  type: LoadBalancer
+  loadBalancerClass: kubernetes.io/openlb
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: tls-backend
+  ports:
+    - name: tls
+      protocol: TCP
+      appProtocol: https
+      port: 443
+      targetPort: 8443

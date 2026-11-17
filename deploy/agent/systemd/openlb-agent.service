@@ -1,0 +1,27 @@
+[Unit]
+Description=OpenLB host agent
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=/etc/openlb/agent.env
+ExecStart=/usr/local/bin/openlb-agent
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGTERM
+# 排空 HTTP 请求期间保留正在执行的 nginx/ipvsadm 子进程。
+KillMode=mixed
+TimeoutStopSec=45s
+StateDirectory=openlb-agent
+StateDirectoryMode=0700
+UMask=0077
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -20,7 +20,7 @@ import (
 // TestCRDIntegration 使用真实 API 校验 schema、status 子资源、UID 不可变和 finalizer。
 // envtest 不运行 namespace/GC controller；namespace 级清理由 controller 回归测试覆盖。
 func TestCRDIntegration(t *testing.T) {
-	env := &envtest.Environment{CRDDirectoryPaths: []string{filepath.Join("..", "..", "deploy", "crd.yaml")}, ErrorIfCRDPathMissing: true}
+	env := &envtest.Environment{CRDDirectoryPaths: []string{filepath.Join("..", "..", "deploy", "install", "crd.yaml")}, ErrorIfCRDPathMissing: true}
 	cfg, err := env.Start()
 	if err != nil {
 		t.Fatal(err)

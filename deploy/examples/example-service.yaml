@@ -1,0 +1,29 @@
+# 一个示例 LoadBalancer Service：被 controller 同步到 10.202.0.1/10.202.0.2 两台
+# nginx agent，80 走 http、443 走 https（用 a-com/b-com 两个 TLS secret）。
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: default
+  annotations:
+    kubernetes.io/openlb.instances: "10.202.0.1, 10.202.0.2"
+    kubernetes.io/openlb.class: "nginx"
+    kubernetes.io/openlb.protocol-port: "http:80, https:443"
+    kubernetes.io/openlb.cert-secrets: "a-com, b-com"
+    kubernetes.io/openlb.network-type: "nodeport"
+    kubernetes.io/openlb.node-network-type: "internal"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: kubernetes.io/openlb
+  externalTrafficPolicy: Cluster
+  selector:
+    app: demo
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8080

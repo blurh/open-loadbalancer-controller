@@ -105,7 +105,12 @@ func (c *Config) MetricsBindAddress() string {
 // agent 端使用
 func (c *Config) ServePort() string { return getenv("OPENLB_SERVE_PORT", ":8080") }
 
-// AgentStateDir 保存端口归属及未完成操作；容器部署时需持久化此目录。
+// ShutdownTimeout 限制 systemd 停止服务时等待 HTTP 配置事务完成的时间。
+func (c *Config) ShutdownTimeout() time.Duration {
+	return getenvDuration("OPENLB_SHUTDOWN_TIMEOUT", 30*time.Second)
+}
+
+// AgentStateDir 保存端口归属及未完成操作；主机升级和重启时需保留此目录。
 func (c *Config) AgentStateDir() string {
 	return getenv("OPENLB_AGENT_STATE_DIR", "/var/lib/openlb-agent")
 }

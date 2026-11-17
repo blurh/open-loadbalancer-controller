@@ -1,0 +1,20 @@
+# ServiceMonitor for Prometheus Operator (optional).
+# 需要集群中已安装 Prometheus Operator（提供 monitoring.coreos.com CRD）。
+# 未纳入 kustomization.yaml，以免在没有 Prometheus Operator 的集群上
+# 执行 `kubectl apply -k` 时因缺少 CRD 失败。按需单独应用：
+#   kubectl apply -f deploy/install/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: openlb-controller
+  namespace: openlb-system
+  labels:
+    app: openlb-controller
+spec:
+  selector:
+    matchLabels:
+      app: openlb-controller
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

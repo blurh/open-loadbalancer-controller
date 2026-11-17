@@ -106,7 +106,7 @@ if err := r.Syncer.Clean(instance, ref); err != nil {
 
 ### 2. 部署配置变更
 
-#### `deploy/deployment.yaml`
+#### `deploy/install/deployment.yaml`
 - 添加 `ports` 定义，暴露 8081 metrics 端口
 - 添加环境变量配置注释
 
@@ -121,7 +121,7 @@ env:
   #   value: ":8081"
 ```
 
-#### 新增 `deploy/metrics-service.yaml`
+#### 新增 `deploy/install/metrics-service.yaml`
 - 创建 `openlb-controller-metrics` Service，暴露 8081 端口
 - 包含 `ServiceMonitor` 定义（用于 Prometheus Operator）
 
@@ -215,7 +215,7 @@ spec:
 
 ### Prometheus Operator
 ```bash
-kubectl apply -f deploy/metrics-service.yaml
+kubectl apply -f deploy/install/metrics-service.yaml
 ```
 
 ServiceMonitor 会自动被 Prometheus Operator 发现并抓取指标。

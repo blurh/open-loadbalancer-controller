@@ -44,7 +44,7 @@ Service 不受影响。零后端保留整份旧配置并返回失败，让 contr
 成功判定仍依赖 `nginx -t` 和 `nginx -s reload` 的退出状态，不额外确认 worker 切换。
 
 两条命令都显式使用 `-p OPENLB_NGINX_HOME -c OPENLB_NGINX_HOME/nginx.conf`，
-容器启动 master 时使用相同路径。基础配置的 include 使用相对路径；自定义目录时需提供
+主机上的 nginx 启动时应使用相同配置路径。基础配置的 include 使用相对路径；自定义目录时需提供
 该目录下的主配置。`OPENLB_NGINX_COMMAND_TIMEOUT` 默认 `3s`，命令失败返回 nginx
 诊断输出，超时触发错误和文件回滚。
 
@@ -53,18 +53,20 @@ Service 不受影响。零后端保留整份旧配置并返回失败，让 contr
 同一配置目录只允许一个 agent 写入。agent 启动时先恢复未完成事务，再进行配置检查；
 损坏的日志会阻止 nginx forwarder 启动，避免使用不完整配置。
 
-容器入口已在启动 nginx 前执行 `openlb-agent --recover-nginx-config`。
-独立进程部署中，如果 nginx 与 agent 都重启，也应先执行此命令，再启动 nginx 和 agent。
+安装包只管理 agent 的 systemd 服务；nginx 由主机自行管理。需要在 nginx 重启前恢复
+中断事务时，可手动执行 `openlb-agent --recover-nginx-config`（先加载 agent 的环境配置）。
+安装时默认将 `/etc/nginx/nginx.conf` 备份为 `nginx.conf.bak` 再覆盖。主机部署见
+[Agent 主机部署](AGENT_DEPLOYMENT.md)。
 
 ## 部署
 
-先更新 `deploy/crd.yaml` 和 `deploy/rbac.yaml`，再更新 controller 和 agent。
+先更新 `deploy/install/crd.yaml` 和 `deploy/install/rbac.yaml`，再更新 controller 和 agent。
 Secret RBAC 新增 `patch` 权限。旧 schema 会裁剪 `certificateRefs`，controller 检测到引用
 没有持久化时拒绝下发。不要通过删除 CRD 或强制去除 finalizer 来代替正常清理。
 
 ```bash
-kubectl apply -f deploy/crd.yaml
-kubectl apply -f deploy/rbac.yaml
+kubectl apply -f deploy/install/crd.yaml
+kubectl apply -f deploy/install/rbac.yaml
 kubectl get olbstate web -n team-a -o yaml
 kubectl get secret tls-cert -n team-a -o yaml
 ```

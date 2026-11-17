@@ -13,7 +13,7 @@ import (
 )
 
 func TestCRDSchemaIsStructural(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "..", "..", "deploy", "crd.yaml"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", "deploy", "install", "crd.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,7 +14,7 @@ Service 注解仍是期望配置的来源，CR 由 controller 创建和维护。
 | `pkg/controllers/state.go` | 实例同步/清理生命周期、Service finalizer、恢复处理 |
 | `pkg/controllers/service.go` | 收集转发资源、下发配置、发布 Service ingress |
 | `pkg/controllers/certificates.go` | Secret 引用登记、finalizer 保护与回收 |
-| `deploy/crd.yaml` | Namespaced CRD、schema 校验、status 子资源 |
+| `deploy/install/crd.yaml` | Namespaced CRD、schema 校验、status 子资源 |
 
 Repository 的写操作成功返回后才允许推进下一步；状态更新回调可能因版本冲突重试，
 回调中不能调用 agent。CRDStore 使用 manager 的 APIReader 读取最新状态，避免写后读和
@@ -85,9 +85,9 @@ agent 的监听端口锁仍然跨 namespace 检查冲突。
 ## 部署与查看
 
 ```bash
-kubectl apply -f deploy/crd.yaml
+kubectl apply -f deploy/install/crd.yaml
 kubectl wait --for=condition=Established crd/openlbservicestates.openlb.io --timeout=60s
-kubectl apply -k deploy/
+kubectl apply -k deploy/install/
 kubectl get olbstate -A
 kubectl get olbstate web -n team-a -o yaml
 ```

@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -32,10 +31,10 @@ func main() {
 
 	a, err := agent.NewAgent()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	interval := c.ConnectionStatsInterval()
@@ -65,17 +64,8 @@ func main() {
 		}
 	}
 
-	// 处理优雅关闭
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigCh
-		log.Println("shutting down...")
-		cancel()
-	}()
-
 	srv := server.New(a, c.ServePort())
-	if err := srv.Run(); err != nil {
-		panic(err)
+	if err := srv.Run(ctx); err != nil {
+		log.Fatal(err)
 	}
 }

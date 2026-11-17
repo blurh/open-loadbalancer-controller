@@ -262,3 +262,11 @@ informer/队列端到端验证。`watch_test.go` 验证生产 watch 谓词接收
 nginx reload 是异步信号，生产成功响应仍以命令退出状态为准；集成测试通过实际请求
 等待 worker 切换并验证流量。agent 端口锁不检测其他进程占用，部署时仍需避开 agent
 自身和其他进程的监听端口。
+
+## 主机交付与优雅关闭
+
+`make agent-package GOARCH=amd64` 生成主机交付包；用 `DESTDIR` 可离线验证安装，
+不触碰系统服务。安装和回滚说明见 [Agent 主机部署](AGENT_DEPLOYMENT.md)。
+`pkg/agent/server/shutdown_test.go` 验证 SIGTERM 对应的 context 取消后排空 Apply、
+停止同步/metrics listener，以及配置事务超时退出。nginx 集成测试读取
+`deploy/agent/nginx/nginx.conf`；systemd 在目标主机上的启停仍需单独验收。

@@ -1,0 +1,21 @@
+# 主机 agent 最小 HTTP 示例：不需要证书，network-type 缺省为 NodePort。
+# 先部署监听 8080 且 label app=demo 的后端，再替换为实际 LB 主机内网 IP。
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: default
+  annotations:
+    kubernetes.io/openlb.instances: "192.168.10.10:38080"
+    kubernetes.io/openlb.class: nginx
+    kubernetes.io/openlb.protocol-port: "http:80"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: kubernetes.io/openlb
+  selector:
+    app: demo
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

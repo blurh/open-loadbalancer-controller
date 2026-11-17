@@ -37,10 +37,10 @@ env:
 
 ### 2. RBAC 权限
 
-leader election 需要操作 `coordination.k8s.io/leases` 资源，已包含在 `deploy/rbac.yaml`：
+leader election 需要操作 `coordination.k8s.io/leases` 资源，已包含在 `deploy/install/rbac.yaml`：
 
 ```yaml
-# deploy/rbac.yaml
+# deploy/install/rbac.yaml
 - apiGroups: ["coordination.k8s.io"]
   resources: ["leases"]
   verbs: ["get", "list", "watch", "create", "update", "patch"]
@@ -48,7 +48,7 @@ leader election 需要操作 `coordination.k8s.io/leases` 资源，已包含在 
 
 ### 3. 副本数
 
-`deploy/deployment.yaml` 已默认设置为 2 副本：
+`deploy/install/deployment.yaml` 已默认设置为 2 副本：
 
 ```yaml
 spec:
@@ -126,12 +126,12 @@ leader election 本身不会刷新该缓存。详见 [状态存储](STORAGE.md)�
 
 1. **应用新的 RBAC**（包含 leases 权限）：
    ```bash
-   kubectl apply -f deploy/rbac.yaml
+   kubectl apply -f deploy/install/rbac.yaml
    ```
 
 2. **更新 Deployment**（新镜像 + replicas: 2）：
    ```bash
-   kubectl apply -f deploy/deployment.yaml
+   kubectl apply -f deploy/install/deployment.yaml
    ```
 
 3. **验证**：
@@ -152,7 +152,7 @@ leader election 本身不会刷新该缓存。详见 [状态存储](STORAGE.md)�
 
 **原因**：RBAC 权限不足
 
-**解决**：确认 `deploy/rbac.yaml` 中的 leases 权限已应用：
+**解决**：确认 `deploy/install/rbac.yaml` 中的 leases 权限已应用：
 ```bash
 kubectl auth can-i get leases --as=system:serviceaccount:openlb-system:openlb-controller -n openlb-system
 # 应输出 "yes"

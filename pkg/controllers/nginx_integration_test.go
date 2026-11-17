@@ -304,11 +304,20 @@ func startIntegrationNginx(t *testing.T) (string, *agent.Agent) {
 	t.Setenv("OPENLB_AGENT_STATE_DIR", t.TempDir())
 	t.Setenv("OPENLB_LVS_BIN", filepath.Join(home, "no-ipvsadm"))
 	t.Setenv("OPENLB_SYNC_MAX_RETRIES", "0")
-	base, err := os.ReadFile("../../deploy/agent/nginx.conf")
+	base, err := os.ReadFile("../../deploy/agent/nginx/nginx.conf")
 	if err != nil {
 		t.Fatal(err)
 	}
-	conf := strings.NewReplacer("user  nginx;", "", "worker_processes  auto;", "worker_processes 1;\nworker_shutdown_timeout 1s;\nerror_log "+home+"/error.log notice;", "pid /run/nginx.pid;", "pid "+home+"/nginx.pid;", "include       mime.types;", "access_log off;\nclient_body_temp_path "+home+"/body;\nproxy_temp_path "+home+"/proxy;\nfastcgi_temp_path "+home+"/fastcgi;\nuwsgi_temp_path "+home+"/uwsgi;\nscgi_temp_path "+home+"/scgi;", "127.0.0.1:8888", fmt.Sprintf("127.0.0.1:%d", freeNginxPort(t))).Replace(string(base))
+	conf := strings.NewReplacer(
+		"worker_processes auto;", "worker_processes 1;",
+		"worker_shutdown_timeout 30s;", "worker_shutdown_timeout 1s;",
+		"error_log stderr notice;", "error_log "+home+"/error.log notice;",
+		"pid /run/nginx.pid;", "pid "+home+"/nginx.pid;",
+		"access_log /dev/stdout;", "access_log off;",
+		"default_type application/octet-stream;", "default_type application/octet-stream;\nclient_body_temp_path "+home+"/body;\nproxy_temp_path "+home+"/proxy;\nfastcgi_temp_path "+home+"/fastcgi;\nuwsgi_temp_path "+home+"/uwsgi;\nscgi_temp_path "+home+"/scgi;",
+		"127.0.0.1:8888", fmt.Sprintf("127.0.0.1:%d", freeNginxPort(t)),
+	).Replace(string(base))
+
 	version, err := exec.Command(bin, "-V").CombinedOutput()
 	if err != nil {
 		t.Fatal(err)
